@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import { Link } from "react-router-dom";
 
 export const Header = () => {
   const { user, isAdmin, signOut } = useAuth();
+  const { lang, setLang } = useLanguage();
 
   const handleSignOut = async () => {
     await signOut();
@@ -34,9 +35,20 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img src="/profile.jpeg" alt="Kadhalin kaadhali" className="h-6 w-6" />
-
           <h1 className="text-xl font-bold">Kadhalin kaadhali</h1>
         </Link>
+        <div className="flex gap-2 ml-4">
+          <button
+            className={`px-3 py-1 rounded-l border ${lang === 'ta' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+            onClick={() => setLang('ta')}
+            type="button"
+          >தமிழ்</button>
+          <button
+            className={`px-3 py-1 rounded-r border ${lang === 'en' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+            onClick={() => setLang('en')}
+            type="button"
+          >English</button>
+        </div>
 
         <div className="flex items-center gap-4">
           <a
@@ -84,9 +96,11 @@ export const Header = () => {
                       <Lightbulb className="h-4 w-4 mr-2" />
                       Suggestion
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <PlusSquare className="h-4 w-4 mr-2" />
-                      Request a Quote
+                    <DropdownMenuItem asChild>
+                      <Link to="/request-quote" className="flex items-center gap-2">
+                        <PlusSquare className="h-4 w-4 mr-2" />
+                        Request a Quote
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>

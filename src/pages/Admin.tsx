@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuotes, Quote, Category } from "@/hooks/useQuotes";
 import { QuoteCard } from "@/components/QuoteCard";
@@ -16,6 +17,27 @@ import { Navigate } from "react-router-dom";
 
 const Admin = () => {
   const { isAdmin, loading: authLoading } = useAuth();
+  const [quoteRequests, setQuoteRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState(true);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      setLoadingRequests(true);
+      const { data, error } = await supabase.from("request_quotes").select("*").order("created_at", { ascending: false });
+      if (!error && data) setQuoteRequests(data);
+      setLoadingRequests(false);
+    };
+    const fetchFeedbacks = async () => {
+      setLoadingFeedbacks(true);
+      const { data, error } = await supabase.from("feedbacks").select("*").order("created_at", { ascending: false });
+      if (!error && data) setFeedbacks(data);
+      setLoadingFeedbacks(false);
+    };
+    fetchRequests();
+    fetchFeedbacks();
+  }, []);
   const { 
     quotes, 
     categories, 
@@ -135,11 +157,64 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="quotes" className="space-y-6">
-          <TabsList>
+        <TabsList>
             <TabsTrigger value="quotes">Quotes Management</TabsTrigger>
+            <TabsTrigger value="quoteRequests">Quote Requests</TabsTrigger>
+            <TabsTrigger value="feedbacks">Feedbacks</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="stats">Statistics</TabsTrigger>
           </TabsList>
+          <TabsContent value="feedbacks" className="space-y-6">
+            <h2 className="text-xl font-semibold">Feedbacks</h2>
+            {loadingFeedbacks ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : feedbacks.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No feedbacks found.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {feedbacks.map((fb) => (
+                  <div key={fb.id} className="border rounded-lg p-4 bg-background shadow flex flex-col gap-2">
+                    <div className="font-bold text-lg">{fb.email}</div>
+                    <div className="text-muted-foreground mb-2">{new Date(fb.created_at).toLocaleString()}</div>
+                    <div className="mb-2">{fb.thoughts}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+          <TabsContent value="quoteRequests" className="space-y-6">
+            <h2 className="text-xl font-semibold">Quote Requests</h2>
+            {loadingRequests ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : quoteRequests.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No quote requests found.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {quoteRequests.map((req) => (
+                  <div key={req.id} className="border rounded-lg p-4 bg-background shadow flex flex-col gap-2">
+                    <div className="font-bold text-lg">{req.name}</div>
+                    <div className="text-muted-foreground">{new Date(req.created_at).toLocaleString()}</div>
+                    <div className="mb-2">{req.quote}</div>
+                    <Button
+                      variant="secondary"
+                      onClick={async () => {
+                        await addQuote({
+                          quote: req.quote,
+                          author: req.name,
+                          category_id: null,
+                        });
+                        // Optionally remove from requests after posting
+                        await supabase.from("request_quotes").delete().eq("id", req.id);
+                        setQuoteRequests((prev) => prev.filter((r) => r.id !== req.id));
+                      }}
+                    >
+                      Add to Quotes
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="quotes" className="space-y-6">
             {/* Actions */}

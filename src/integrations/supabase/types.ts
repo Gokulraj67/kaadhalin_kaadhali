@@ -94,6 +94,30 @@ export type Database = {
           },
         ]
       }
+      request_quotes: {
+        Row: {
+          id: string;
+          name: string;
+          quote: string;
+          description: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          quote: string;
+          description: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          quote?: string;
+          description?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      }
       user_roles: {
         Row: {
           id: string
