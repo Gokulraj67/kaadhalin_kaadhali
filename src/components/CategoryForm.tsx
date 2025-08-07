@@ -1,20 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+import { Category } from "@/hooks/useQuotes";
+
 interface CategoryFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: { name: string; description?: string }) => void;
+  editingCategory?: Category | null;
   loading?: boolean;
 }
 
-export const CategoryForm = ({ open, onOpenChange, onSubmit, loading }: CategoryFormProps) => {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+export const CategoryForm = ({ open, onOpenChange, onSubmit, editingCategory, loading }: CategoryFormProps) => {
+  const [name, setName] = useState(editingCategory?.name || "");
+  const [description, setDescription] = useState(editingCategory?.description || "");
+
+  useEffect(() => {
+    if (editingCategory) {
+      setName(editingCategory.name);
+      setDescription(editingCategory.description || "");
+    } else {
+      setName("");
+      setDescription("");
+    }
+  }, [editingCategory, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,15 +35,14 @@ export const CategoryForm = ({ open, onOpenChange, onSubmit, loading }: Category
       name,
       description: description || undefined
     });
-    setName("");
-    setDescription("");
+    onOpenChange(false); // Close dialog on submit
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Category</DialogTitle>
+          <DialogTitle>{editingCategory ? "Edit Category" : "Add New Category"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -65,7 +77,7 @@ export const CategoryForm = ({ open, onOpenChange, onSubmit, loading }: Category
               Cancel
             </Button>
             <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? "Adding..." : "Add Category"}
+              {loading ? (editingCategory ? "Updating..." : "Adding...") : (editingCategory ? "Update Category" : "Add Category")}
             </Button>
           </div>
         </form>

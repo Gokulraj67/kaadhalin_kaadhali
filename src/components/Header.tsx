@@ -87,15 +87,7 @@ export const Header = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link to="/feedback" className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4 mr-2" /> Feedback
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Lightbulb className="h-4 w-4 mr-2" />
-                      Suggestion
-                    </DropdownMenuItem>
+                    
                     <DropdownMenuItem asChild>
                       <Link to="/request-quote" className="flex items-center gap-2">
                         <PlusSquare className="h-4 w-4 mr-2" />

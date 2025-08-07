@@ -9,7 +9,9 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import RequestQuote from "./pages/RequestQuote";
-import Feedback from "./pages/Feedback";
+import { Footer } from "@/components/Footer";
+import { ContactForm } from "@/components/ContactForm";
+
 
 const queryClient = new QueryClient();
 
@@ -26,10 +28,12 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/request-quote" element={<RequestQuote />} />
-            <Route path="/feedback" element={<Feedback />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <ContactForm />
+          <Footer />
         </div>
       </BrowserRouter>
     </TooltipProvider>
