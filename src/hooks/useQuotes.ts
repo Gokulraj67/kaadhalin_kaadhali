@@ -165,6 +165,72 @@ export const useQuotes = () => {
     }
   };
 
+  const updateCategory = async (id: string, categoryData: Partial<Omit<Category, 'id' | 'created_at'>>) => {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update(categoryData)
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Category updated successfully",
+        description: "The category has been updated"
+      });
+      
+      fetchCategories();
+    } catch (error: any) {
+      toast({
+        title: "Error updating category",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    try {
+      const { data: quotes, error: quotesError } = await supabase
+        .from('quotes')
+        .select('id')
+        .eq('category_id', id)
+        .limit(1);
+
+      if (quotesError) throw quotesError;
+
+      if (quotes && quotes.length > 0) {
+        toast({
+          title: "Cannot delete category",
+          description: "This category is still being used by one or more quotes.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Category deleted successfully",
+        description: "The category has been removed"
+      });
+      
+      fetchCategories();
+      fetchQuotes();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting category",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -184,6 +250,8 @@ export const useQuotes = () => {
     addQuote,
     updateQuote,
     deleteQuote,
-    addCategory
+    addCategory,
+    updateCategory,
+    deleteCategory
   };
 };

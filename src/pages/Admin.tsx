@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuotes, Quote } from "@/hooks/useQuotes";
+import { useQuotes, Quote, Category } from "@/hooks/useQuotes";
 import { QuoteCard } from "@/components/QuoteCard";
 import { QuoteForm } from "@/components/QuoteForm";
 import { CategoryForm } from "@/components/CategoryForm";
@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, Filter, Tag } from "lucide-react";
+import { Plus, Search, Filter, Tag, Edit, Trash } from "lucide-react";
 import { Navigate } from "react-router-dom";
 
 const Admin = () => {
@@ -23,7 +23,9 @@ const Admin = () => {
     addQuote, 
     updateQuote, 
     deleteQuote, 
-    addCategory 
+    addCategory, 
+    updateCategory, 
+    deleteCategory 
   } = useQuotes();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,6 +34,8 @@ const Admin = () => {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [deleteQuoteId, setDeleteQuoteId] = useState<string | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
   if (authLoading) {
@@ -84,9 +88,29 @@ const Admin = () => {
     setShowCategoryForm(false);
   };
 
+  const handleUpdateCategory = async (data: { name: string; description?: string }) => {
+    if (!editingCategory) return;
+    setFormLoading(true);
+    await updateCategory(editingCategory.id, data);
+    setFormLoading(false);
+    setShowCategoryForm(false);
+    setEditingCategory(null);
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!deleteCategoryId) return;
+    await deleteCategory(deleteCategoryId);
+    setDeleteCategoryId(null);
+  };
+
   const handleEditQuote = (quote: Quote) => {
     setEditingQuote(quote);
     setShowQuoteForm(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setShowCategoryForm(true);
   };
 
   if (loading) {
@@ -188,7 +212,10 @@ const Admin = () => {
           <TabsContent value="categories" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Categories Management</h2>
-              <Button onClick={() => setShowCategoryForm(true)}>
+              <Button onClick={() => {
+                setEditingCategory(null);
+                setShowCategoryForm(true);
+              }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Category
               </Button>
@@ -196,7 +223,7 @@ const Admin = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {categories.map((category) => (
-                <Card key={category.id}>
+                <Card key={category.id} className="flex flex-col">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Tag className="h-4 w-4" />
@@ -206,11 +233,21 @@ const Admin = () => {
                       <CardDescription>{category.description}</CardDescription>
                     )}
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-grow">
                     <Badge variant="secondary">
                       {quotes.filter(q => q.category_id === category.id).length} quotes
                     </Badge>
                   </CardContent>
+                  <CardFooter className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEditCategory(category)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => setDeleteCategoryId(category.id)}>
+                      <Trash className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </CardFooter>
                 </Card>
               ))}
             </div>
@@ -267,8 +304,12 @@ const Admin = () => {
 
         <CategoryForm
           open={showCategoryForm}
-          onOpenChange={setShowCategoryForm}
-          onSubmit={handleAddCategory}
+          onOpenChange={(open) => {
+            setShowCategoryForm(open);
+            if (!open) setEditingCategory(null);
+          }}
+          onSubmit={editingCategory ? handleUpdateCategory : handleAddCategory}
+          editingCategory={editingCategory}
           loading={formLoading}
         />
 
@@ -284,6 +325,23 @@ const Admin = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteQuote} className="bg-destructive text-destructive-foreground">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!deleteCategoryId} onOpenChange={() => setDeleteCategoryId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Category</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this category? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteCategory} className="bg-destructive text-destructive-foreground">
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>
