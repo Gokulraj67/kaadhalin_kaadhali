@@ -11,37 +11,32 @@ export const useAuth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Fetch user role
-          setTimeout(async () => {
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            setUserRole(roleData?.role || 'user');
-          }, 0);
-        } else {
-          setUserRole(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const setUserProfile = async (session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
+
+      if (session?.user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+        setUserRole(roleData?.role || 'user');
+      } else {
+        setUserRole(null);
+      }
       setLoading(false);
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserProfile(session);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUserProfile(session);
+      }
+    );
 
     return () => subscription.unsubscribe();
   }, []);
