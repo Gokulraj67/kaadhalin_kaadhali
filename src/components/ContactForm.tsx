@@ -7,7 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 
 export const ContactForm = () => {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -25,9 +25,9 @@ export const ContactForm = () => {
         title: "Message Sent!",
         description: "Your message has been successfully sent. We will get back to you soon.",
       });
-      setName("");
-      setEmail("");
-      setMessage("");
+  setName("");
+  setMobile("");
+  setMessage("");
     } catch (error) {
       toast({
         title: "Error",
@@ -55,13 +55,14 @@ export const ContactForm = () => {
           />
         </div>
         <div>
-          <Label htmlFor="contact-email">Email</Label>
+          <Label htmlFor="contact-mobile">Mobile Number</Label>
           <Input
-            id="contact-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@example.com"
+            id="contact-mobile"
+            type="tel"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
+            placeholder="Your mobile number"
+            pattern="[0-9]{10,15}"
             required
           />
         </div>
