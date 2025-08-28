@@ -51,8 +51,20 @@ const RequestQuote = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
         <h1 className="text-2xl font-bold">{lang === 'en' ? 'Request a Quote' : 'மேற்கோள் கோரிக்கை'}</h1>
+        <div className="flex gap-2">
+          <button
+            className={`px-3 py-1 rounded-l border ${lang === 'ta' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+            onClick={() => setLang('ta')}
+            type="button"
+          >தமிழ்</button>
+          <button
+            className={`px-3 py-1 rounded-r border ${lang === 'en' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+            onClick={() => setLang('en')}
+            type="button"
+          >English</button>
+        </div>
       </div>
       <div className="mb-6 p-4 rounded bg-gray-50 border text-sm">
         {lang === 'en' ? (

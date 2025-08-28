@@ -32,25 +32,14 @@ export const Header = () => {
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="container px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
         <Link to="/" className="flex items-center gap-2">
           <img src="/profile.jpeg" alt="Kadhalin kaadhali" className="h-6 w-6" />
           <h1 className="text-xl font-bold">Kadhalin kaadhali</h1>
         </Link>
-        <div className="flex gap-2 ml-4">
-          <button
-            className={`px-3 py-1 rounded-l border ${lang === 'ta' ? 'bg-primary text-white' : 'bg-gray-100'}`}
-            onClick={() => setLang('ta')}
-            type="button"
-          >தமிழ்</button>
-          <button
-            className={`px-3 py-1 rounded-r border ${lang === 'en' ? 'bg-primary text-white' : 'bg-gray-100'}`}
-            onClick={() => setLang('en')}
-            type="button"
-          >English</button>
-        </div>
 
-        <div className="flex items-center gap-4">
+
+  <div className="flex items-center gap-2 sm:gap-4 mt-2 sm:mt-0">
           <a
             href="https://www.instagram.com/kadhalin_kaadhali/"
             target="_blank"
@@ -87,13 +76,28 @@ export const Header = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    
                     <DropdownMenuItem asChild>
                       <Link to="/request-quote" className="flex items-center gap-2">
                         <PlusSquare className="h-4 w-4 mr-2" />
                         Request a Quote
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <div className="px-2 py-1">
+                      <div className="text-xs font-semibold text-muted-foreground mb-1">Language</div>
+                      <div className="flex gap-2">
+                        <button
+                          className={`px-2 py-1 rounded ${lang === 'ta' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+                          onClick={() => setLang('ta')}
+                          type="button"
+                        >தமிழ்</button>
+                        <button
+                          className={`px-2 py-1 rounded ${lang === 'en' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+                          onClick={() => setLang('en')}
+                          type="button"
+                        >English</button>
+                      </div>
+                    </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="h-4 w-4 mr-2" />

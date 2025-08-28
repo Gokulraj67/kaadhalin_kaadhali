@@ -40,9 +40,9 @@ export const ContactForm = () => {
   };
 
   return (
-    <section className="container mx-auto p-4 my-8 bg-card rounded-lg shadow-lg">
+  <section className="container px-4 sm:px-6 lg:px-8 my-8 bg-card rounded-lg shadow-lg">
       <h2 className="text-3xl font-bold text-center mb-6">Contact Us</h2>
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto">
+  <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto w-full">
         <div>
           <Label htmlFor="contact-name">Name</Label>
           <Input

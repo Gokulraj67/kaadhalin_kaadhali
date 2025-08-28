@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { Quote } from "@/hooks/useQuotes";
+import { useState } from "react";
 
 interface QuoteCardProps {
   quote: Quote;
@@ -11,9 +12,25 @@ interface QuoteCardProps {
   onDelete?: (id: string) => void;
 }
 
+const EMOJIS = [
+  { emoji: "❤️", label: "love" },
+  { emoji: "😂", label: "funny" },
+  { emoji: "🔥", label: "inspiring" },
+  { emoji: "👏", label: "applause" },
+];
+
 export const QuoteCard = ({ quote, isAdmin, onEdit, onDelete }: QuoteCardProps) => {
+  const [reactions, setReactions] = useState<{ [key: string]: number }>({});
+  const [animating, setAnimating] = useState<{ [key: string]: boolean }>({});
+
+  const handleReact = (label: string) => {
+    setReactions((prev) => ({ ...prev, [label]: (prev[label] || 0) + 1 }));
+    setAnimating((prev) => ({ ...prev, [label]: true }));
+    setTimeout(() => setAnimating((prev) => ({ ...prev, [label]: false })), 700);
+  };
+
   return (
-    <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-primary/50">
+    <Card className="h-full transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-l-4 border-l-primary/50 group">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start gap-2">
           <div className="flex-1">
@@ -49,6 +66,24 @@ export const QuoteCard = ({ quote, isAdmin, onEdit, onDelete }: QuoteCardProps) 
         <blockquote className="text-lg font-medium leading-relaxed mb-4 text-foreground/90">
           "{quote.quote}"
         </blockquote>
+        {/* Emoji Reaction Bar */}
+        <div className="flex gap-3 mb-2 justify-center opacity-80 group-hover:opacity-100 transition-opacity">
+          {EMOJIS.map(({ emoji, label }) => (
+            <button
+              key={label}
+              className={`emoji-btn relative text-xl transition-transform duration-200 hover:scale-125 focus:outline-none ${animating[label] ? 'animate-float-heart' : ''}`}
+              onClick={() => handleReact(label)}
+              aria-label={label}
+            >
+              {emoji}
+              {reactions[label] ? (
+                <span className="absolute -top-2 -right-2 bg-primary text-xs text-white rounded-full px-1.5 py-0.5 animate-bounce">
+                  {reactions[label]}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </div>
         <footer className="flex flex-col gap-2">
           <cite className="text-sm font-semibold text-primary">
             — {quote.author}
