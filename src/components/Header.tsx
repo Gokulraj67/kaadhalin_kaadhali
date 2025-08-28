@@ -63,52 +63,7 @@ export const Header = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {user ? (
-            <>
-              <div className="flex items-center gap-2">
-                <Badge variant={isAdmin ? "default" : "secondary"}>
-                  {isAdmin ? "Admin" : "User"}
-                </Badge>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <img src={user.user_metadata.avatar_url || '/placeholder.svg'} alt="User avatar" className="h-8 w-8 rounded-full" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <div className="px-2 py-1.5 text-sm font-normal">
-                      <div className="font-semibold">{user.user_metadata.full_name || user.email}</div>
-                      <div className="text-xs text-muted-foreground">{user.email}</div>
-                    </div>
-                    <DropdownMenuSeparator />
-                    {/* Request a Quote removed for admin */}
-                    <DropdownMenuSeparator />
-                    <div className="px-2 py-1.5">
-                      <div className="text-xs font-semibold text-muted-foreground mb-1">Language</div>
-                      <div className="flex gap-2">
-                        <button
-                          className={`px-2 py-1 text-xs rounded ${lang === 'ta' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
-                          onClick={() => setLang('ta')}
-                          type="button"
-                        >தமிழ்</button>
-                        <button
-                          className={`px-2 py-1 text-xs rounded ${lang === 'en' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
-                          onClick={() => setLang('en')}
-                          type="button"
-                        >English</button>
-                      </div>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </>
-          ) : (
+          {!user && (
             <Link to="/auth">
               <Button>Sign In</Button>
             </Link>
@@ -122,6 +77,67 @@ export const Header = () => {
             </SheetTrigger>
             <SheetContent side="right">
               <div className="flex flex-col gap-4 p-4">
+                {user && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                          {user.user_metadata.avatar_url ? (
+                            <img src={user.user_metadata.avatar_url} alt="User avatar" className="h-8 w-8 rounded-full" />
+                          ) : (
+                            <span
+                              className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg uppercase transition-transform duration-200 hover:scale-110 focus:scale-110 ring-2 ring-transparent hover:ring-primary/60 focus:ring-primary/80 cursor-pointer shadow-md hover:shadow-lg"
+                              tabIndex={0}
+                              title={user.user_metadata.full_name || user.email || 'Profile'}
+                            >
+                              {(() => {
+                                const name = user.user_metadata.full_name || user.email || '';
+                                const parts = name.split(' ');
+                                if (parts.length >= 2) {
+                                  return parts[0][0] + parts[parts.length-1][0];
+                                } else if (parts.length === 1) {
+                                  return parts[0][0];
+                                } else {
+                                  return '?';
+                                }
+                              })()}
+                            </span>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <div className="px-2 py-1.5 text-sm font-normal">
+                          <div className="font-semibold">{user.user_metadata.full_name || user.email}</div>
+                          <div className="text-xs text-muted-foreground">{user.email}</div>
+                        </div>
+                        <DropdownMenuSeparator />
+                        <div className="px-2 py-1.5">
+                          <div className="text-xs font-semibold text-muted-foreground mb-1">Language</div>
+                          <div className="flex gap-2">
+                            <button
+                              className={`px-2 py-1 text-xs rounded ${lang === 'ta' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                              onClick={() => setLang('ta')}
+                              type="button"
+                            >தமிழ்</button>
+                            <button
+                              className={`px-2 py-1 text-xs rounded ${lang === 'en' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                              onClick={() => setLang('en')}
+                              type="button"
+                            >English</button>
+                          </div>
+                        </div>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleSignOut}>
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Sign Out
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Badge variant={isAdmin ? "default" : "secondary"}>
+                      {isAdmin ? "Admin" : "User"}
+                    </Badge>
+                  </div>
+                )}
                 {navLinks}
               </div>
             </SheetContent>

@@ -90,15 +90,20 @@ export const useAuth = () => {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
-    
-    if (error) {
+    // Always clear user/session state
+    setUser(null);
+    setSession(null);
+    setUserRole(null);
+    // Ignore 'auth session missing' error, only show toast for other errors
+    if (error && !error.message.includes('auth session missing')) {
       toast({
         title: "Sign out failed",
         description: error.message,
         variant: "destructive"
       });
     }
-
+    // Redirect to home or login page after sign out
+    window.location.href = "/";
     return { error };
   };
 
