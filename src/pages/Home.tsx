@@ -14,15 +14,15 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const filteredQuotes = quotes.filter(quote => {
+    // Only show published quotes on homepage
+    if (quote.status !== 'published') return false;
     const matchesSearch = 
       quote.quote.toLowerCase().includes(searchTerm.toLowerCase()) ||
       quote.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
       quote.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesCategory = 
       selectedCategory === "all" || 
       quote.category_id === selectedCategory;
-    
     return matchesSearch && matchesCategory;
   });
 
@@ -48,15 +48,7 @@ const Home = () => {
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
             இதயம் தொடும் வார்த்தைகள், உயிர் நிறைக்கும் சிந்தனைகள்... இங்கு என் மனதில் பிறந்த மேற்கோள்களும், உங்களால் பகிரப்படும் உணர்வுகளும் ஒன்றாக சேர்கின்றன. அன்பு, நட்பு, வாழ்க்கை, கனவு, ஊக்கம் என எல்லா தருணங்களுக்கும் உரிய மேற்கோள்கள் இங்கு இடம்பெறும். உங்களது சொற்கள் மற்றொருவரின் இதயத்தைத் தொட்டுச் செல்லட்டும். Kadhalin Kaadhali – உங்கள் உணர்வுகளை வார்த்தைகளால் உயிர்ப்பிக்கும் இடம். ❤️
           </p>
-          <Link
-            to="/request-quote"
-            className="inline-block mt-6 font-semibold px-6 py-3 rounded-lg bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white shadow-lg hover:scale-105 transition-transform duration-300"
-            tabIndex={0}
-            role="button"
-            aria-label="Add your own quote"
-          >
-            📝 உங்கள் எண்ணங்களை பகிருங்கள்!
-          </Link>
+         
         </section>
 
         <section className="mb-8">

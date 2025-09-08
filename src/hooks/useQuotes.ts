@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,6 +10,7 @@ export interface Quote {
   category_id?: string;
   created_at: string;
   updated_at: string;
+  status: "draft" | "published" | "archived";
   categories?: {
     name: string;
     description?: string;
@@ -29,67 +30,57 @@ export const useQuotes = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchQuotes = async () => {
+  const fetchQuotes = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('quotes')
-        .select(`
+        .from("quotes")
+        .select(
+          `
           *,
           categories (
             name,
             description
           )
-        `)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setQuotes(data || []);
+      if (data) setQuotes(data as Quote[]);
     } catch (error: any) {
       toast({
         title: "Error fetching quotes",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error: any) {
-      toast({
-        title: "Error fetching categories",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
+  }, [toast]);
 
   const addQuote = async (quoteData: Omit<Quote, 'id' | 'created_at' | 'updated_at' | 'categories'>) => {
     try {
-      const { error } = await supabase
-        .from('quotes')
-        .insert(quoteData);
+      if (!quoteData.author || !quoteData.quote) {
+        toast({
+          title: "Missing required fields",
+          description: "Author and quote are required.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase.from("quotes").insert([quoteData]);
 
       if (error) throw error;
-      
+
       toast({
         title: "Quote added successfully",
-        description: "The quote has been added to the collection"
+        description: "The quote has been added to the collection",
       });
-      
       fetchQuotes();
     } catch (error: any) {
       toast({
         title: "Error adding quote",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -97,70 +88,83 @@ export const useQuotes = () => {
   const updateQuote = async (id: string, quoteData: Partial<Omit<Quote, 'id' | 'created_at' | 'updated_at' | 'categories'>>) => {
     try {
       const { error } = await supabase
-        .from('quotes')
-        .update(quoteData)
-        .eq('id', id);
+        .from("quotes")
+        .update({ ...quoteData, updated_at: new Date().toISOString() })
+        .eq("id", id);
 
       if (error) throw error;
-      
+
       toast({
         title: "Quote updated successfully",
-        description: "The quote has been updated"
+        description: "The quote has been updated",
       });
-      
+
       fetchQuotes();
     } catch (error: any) {
       toast({
         title: "Error updating quote",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const deleteQuote = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('quotes')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("quotes").delete().eq("id", id);
 
       if (error) throw error;
-      
+
       toast({
         title: "Quote deleted successfully",
-        description: "The quote has been removed from the collection"
+        description: "The quote has been removed from the collection",
       });
-      
+
       fetchQuotes();
     } catch (error: any) {
       toast({
         title: "Error deleting quote",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
-  const addCategory = async (categoryData: Omit<Category, 'id' | 'created_at'>) => {
+  const fetchCategories = useCallback(async () => {
     try {
-      const { error } = await supabase
-        .from('categories')
-        .insert(categoryData);
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("name");
 
       if (error) throw error;
-      
+      if (data) setCategories(data);
+    } catch (error: any) {
+      toast({
+        title: "Error fetching categories",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  const addCategory = async (categoryData: Omit<Category, 'id' | 'created_at'>) => {
+    try {
+      const { error } = await supabase.from("categories").insert([categoryData]);
+
+      if (error) throw error;
+
       toast({
         title: "Category added successfully",
-        description: "The category has been created"
+        description: "The category has been created",
       });
-      
+
       fetchCategories();
     } catch (error: any) {
       toast({
         title: "Error adding category",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -168,23 +172,23 @@ export const useQuotes = () => {
   const updateCategory = async (id: string, categoryData: Partial<Omit<Category, 'id' | 'created_at'>>) => {
     try {
       const { error } = await supabase
-        .from('categories')
-        .update(categoryData)
-        .eq('id', id);
+        .from("categories")
+        .update({ ...categoryData })
+        .eq("id", id);
 
       if (error) throw error;
-      
+
       toast({
         title: "Category updated successfully",
-        description: "The category has been updated"
+        description: "The category has been updated",
       });
-      
+
       fetchCategories();
     } catch (error: any) {
       toast({
         title: "Error updating category",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -192,9 +196,9 @@ export const useQuotes = () => {
   const deleteCategory = async (id: string) => {
     try {
       const { data: quotes, error: quotesError } = await supabase
-        .from('quotes')
-        .select('id')
-        .eq('category_id', id)
+        .from("quotes")
+        .select("id")
+        .eq("category_id", id)
         .limit(1);
 
       if (quotesError) throw quotesError;
@@ -203,30 +207,27 @@ export const useQuotes = () => {
         toast({
           title: "Cannot delete category",
           description: "This category is still being used by one or more quotes.",
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
 
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("categories").delete().eq("id", id);
 
       if (error) throw error;
-      
+
       toast({
         title: "Category deleted successfully",
-        description: "The category has been removed"
+        description: "The category has been removed",
       });
-      
+
       fetchCategories();
       fetchQuotes();
     } catch (error: any) {
       toast({
         title: "Error deleting category",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -237,21 +238,18 @@ export const useQuotes = () => {
       await Promise.all([fetchQuotes(), fetchCategories()]);
       setLoading(false);
     };
-
     loadData();
-  }, []);
+  }, [fetchQuotes, fetchCategories]);
 
   return {
     quotes,
     categories,
     loading,
-    fetchQuotes,
-    fetchCategories,
     addQuote,
     updateQuote,
     deleteQuote,
     addCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
   };
 };

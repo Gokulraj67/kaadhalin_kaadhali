@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuotes, Quote, Category } from "@/hooks/useQuotes";
@@ -14,24 +14,42 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Search, Filter, Tag, Edit, Trash } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
+
+interface QuoteRequest {
+  id: string;
+  name: string;
+  quote: string;
+  created_at: string;
+}
 
 const Admin = () => {
   const { isAdmin, loading: authLoading } = useAuth();
-  const [quoteRequests, setQuoteRequests] = useState<any[]>([]);
+  const { toast } = useToast();
+  const [quoteRequests, setQuoteRequests] = useState<QuoteRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
-  
 
   useEffect(() => {
     const fetchRequests = async () => {
       setLoadingRequests(true);
-      const { data, error } = await supabase.from("request_quotes").select("*").order("created_at", { ascending: false });
-      if (!error && data) setQuoteRequests(data);
-      setLoadingRequests(false);
+      try {
+        const { data, error } = await supabase.from("request_quotes").select("*").order("created_at", { ascending: false });
+        if (error) throw error;
+        if (data) setQuoteRequests(data);
+      } catch (error: any) {
+        toast({
+          title: "Error fetching quote requests",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingRequests(false);
+      }
     };
     
     fetchRequests();
-    
-  }, []);
+  }, [toast]);
+
   const { 
     quotes, 
     categories, 
@@ -41,7 +59,7 @@ const Admin = () => {
     deleteQuote, 
     addCategory, 
     updateCategory, 
-    deleteCategory 
+    deleteCategory
   } = useQuotes();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -54,6 +72,12 @@ const Admin = () => {
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
+  const inventoryQuotes = useMemo(() => quotes.filter(q => q.status === 'draft'), [quotes]);
+
+  const handlePublishQuote = async (quote: Quote) => {
+    await updateQuote(quote.id, { ...quote, status: 'published' });
+  };
+
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -63,29 +87,29 @@ const Admin = () => {
   }
 
   const filteredQuotes = quotes.filter(quote => {
+    if (quote.status !== 'published') return false;
     const matchesSearch = 
       quote.quote.toLowerCase().includes(searchTerm.toLowerCase()) ||
       quote.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (quote.description || "").toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesCategory = 
       selectedCategory === "all" || 
       quote.category_id === selectedCategory;
-    
     return matchesSearch && matchesCategory;
   });
 
-  const handleAddQuote = async (data: any) => {
+  const handleAddQuote = async (quoteData: Partial<Quote>) => {
     setFormLoading(true);
-    await addQuote(data);
+    const dataWithStatus = { ...quoteData, status: 'draft' };
+    await addQuote(dataWithStatus as Quote);
     setFormLoading(false);
     setShowQuoteForm(false);
   };
 
-  const handleUpdateQuote = async (data: any) => {
+  const handleUpdateQuote = async (quoteData: Partial<Quote>) => {
     if (!editingQuote) return;
     setFormLoading(true);
-    await updateQuote(editingQuote.id, data);
+    await updateQuote(editingQuote.id, quoteData);
     setFormLoading(false);
     setShowQuoteForm(false);
     setEditingQuote(null);
@@ -151,10 +175,10 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="quotes" className="space-y-6">
-        <TabsList>
+          <TabsList>
             <TabsTrigger value="quotes">Quotes Management</TabsTrigger>
             <TabsTrigger value="quoteRequests">Quote Requests</TabsTrigger>
-            
+            <TabsTrigger value="inventory">Inventory Storage</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="stats">Statistics</TabsTrigger>
           </TabsList>
@@ -179,8 +203,8 @@ const Admin = () => {
                           quote: req.quote,
                           author: req.name,
                           category_id: null,
-                        });
-                        // Optionally remove from requests after posting
+                          status: 'draft'
+                        } as Quote);
                         await supabase.from("request_quotes").delete().eq("id", req.id);
                         setQuoteRequests((prev) => prev.filter((r) => r.id !== req.id));
                       }}
@@ -193,8 +217,38 @@ const Admin = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="inventory" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Inventory Storage</h2>
+              <Button onClick={() => setShowQuoteForm(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add to Inventory
+              </Button>
+            </div>
+            {inventoryQuotes.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No draft quotes found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {inventoryQuotes.map((quote) => (
+                  <Card key={quote.id}>
+                    <CardHeader>
+                      <CardTitle>{quote.author}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p>{quote.quote}</p>
+                    </CardContent>
+                    <CardFooter>
+                      <Button onClick={() => handlePublishQuote(quote)}>Publish</Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="quotes" className="space-y-6">
-            {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4 justify-between">
               <div className="flex flex-col sm:flex-row gap-4 flex-1">
                 <div className="relative flex-1">
@@ -231,7 +285,6 @@ const Admin = () => {
               </Button>
             </div>
 
-            {/* Stats */}
             <div className="flex flex-wrap gap-4">
               <Badge variant="outline">
                 {filteredQuotes.length} quotes displayed
@@ -241,7 +294,6 @@ const Admin = () => {
               </Badge>
             </div>
 
-            {/* Quotes Grid */}
             {filteredQuotes.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">No quotes found</p>
@@ -341,7 +393,6 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Forms */}
         <QuoteForm
           open={showQuoteForm}
           onOpenChange={(open) => {
@@ -365,7 +416,6 @@ const Admin = () => {
           loading={formLoading}
         />
 
-        {/* Delete Confirmation */}
         <AlertDialog open={!!deleteQuoteId} onOpenChange={() => setDeleteQuoteId(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
