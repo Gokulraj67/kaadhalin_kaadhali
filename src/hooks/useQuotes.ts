@@ -34,15 +34,7 @@ export const useQuotes = () => {
     try {
       const { data, error } = await supabase
         .from("quotes")
-        .select(
-          `
-          *,
-          categories (
-            name,
-            description
-          )
-        `
-        )
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -67,7 +59,7 @@ export const useQuotes = () => {
         return;
       }
 
-      const { error } = await supabase.from("quotes").insert([quoteData]);
+      const { error } = await supabase.from("quotes").insert([{ ...quoteData, status: quoteData.status || 'draft' }]);
 
       if (error) throw error;
 
@@ -89,7 +81,7 @@ export const useQuotes = () => {
     try {
       const { error } = await supabase
         .from("quotes")
-        .update({ ...quoteData, updated_at: new Date().toISOString() })
+        .update({ ...quoteData })
         .eq("id", id);
 
       if (error) throw error;

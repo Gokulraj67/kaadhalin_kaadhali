@@ -28,6 +28,7 @@ export const QuoteForm = ({
   const [author, setAuthor] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [status, setStatus] = useState<"draft" | "published" | "archived">("draft");
 
   useEffect(() => {
     if (editingQuote) {
@@ -35,11 +36,13 @@ export const QuoteForm = ({
       setAuthor(editingQuote.author);
       setDescription(editingQuote.description || "");
       setCategoryId(editingQuote.category_id || "");
+      setStatus(editingQuote.status || "draft");
     } else {
       setQuote("");
       setAuthor("");
       setDescription("");
       setCategoryId("");
+      setStatus("draft");
     }
   }, [editingQuote, open]);
 
@@ -49,7 +52,8 @@ export const QuoteForm = ({
       quote,
       author,
       description: description || null,
-      category_id: categoryId || null
+      category_id: categoryId || null,
+      status,
     });
   };
 
@@ -108,6 +112,20 @@ export const QuoteForm = ({
                     {category.name}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select value={status} onValueChange={(value) => setStatus(value as "draft" | "published" | "archived")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>
             </Select>
           </div>
